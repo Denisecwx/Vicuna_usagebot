@@ -101,16 +101,16 @@ def get_daily_usage():
             inactive_str = "--N/A--"
         message = f'{summary}\n\nActive Accounts (Questions downloaded)\n-------------\n{active_str}\n\nInactive Accounts (Questions downloaded)\n-------------\n{inactive_str}'
         
-        print(message)
+        # print(message)
         # send message
-        # bot.sendMessage(chat_id=config.TELE_CHAT_ID, text=message)
+        bot.sendMessage(chat_id=config.TELE_CHAT_ID, text=message)
     
 if __name__ == "__main__":
     get_daily_usage()
     # start job at 8pm everyday
-    # scheduler.add_job(get_daily_usage, 'interval', hours=24, start_date=datetime.today().replace(hour=20, minute=0, second=0, microsecond=0))
+    scheduler.add_job(get_daily_usage, 'interval', hours=24, start_date=datetime.today().replace(hour=20, minute=0, second=0, microsecond=0))
 
-    # try:
-    #     scheduler.start()
-    # except (KeyboardInterrupt, SystemExit):
-    #     pass
+    try:
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        pass
