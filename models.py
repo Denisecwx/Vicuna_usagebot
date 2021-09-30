@@ -102,7 +102,7 @@ def get_daily_usage():
         
         # print(message)
         # send message
-        bot.sendMessage(chat_id=config.TELE_CHAT_ID, texts=message)
+        bot.sendMessage(chat_id=config.TELE_CHAT_ID, text=message)
     
 if __name__ == "__main__":
     get_daily_usage()
