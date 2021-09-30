@@ -43,7 +43,7 @@ def get_daily_usage():
         
         active_count = 0 # active within past 5 days
         downld_data = conn.execute(
-            text(f"SELECT * FROM histories WHERE MONTH(created_at) = MONTH(CURRENT_DATE()) - {month_range} AND YEAR(created_at) = YEAR(CURRENT_DATE());")
+            text(f"SELECT * FROM histories WHERE MONTH(created_at) >= MONTH(CURRENT_DATE()) - {month_range} AND YEAR(created_at) = YEAR(CURRENT_DATE());")
         )
 
         # column indexes for histories
