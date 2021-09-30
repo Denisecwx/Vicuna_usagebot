@@ -57,9 +57,9 @@ def get_daily_usage():
             data_month = d[date_col].strptime(str(d[date_col]), "%Y-%m-%d %H:%M:%S").month
 
             if data_date == today: # number of q downloaded today
-                user_stats[email][1] += d[nqn_col]
+                user_stats[email][1] += parse_number(d[nqn_col])
             if data_month == this_month: # number of q downloaded this month
-                user_stats[email][2] += d[nqn_col]
+                user_stats[email][2] += parse_number(d[nqn_col])
 
             if data_date>=last_five and user_stats[email][4]==None:
                 user_stats[email][4] = True
@@ -67,12 +67,13 @@ def get_daily_usage():
             elif data_date < last_five and user_stats[email][4]==None:
                 user_stats[email][4] = False
             # number of q downloaded past 3 months
-            try:    # integer
-                user_stats[email][2] += d[nqn_col]
-            except Exception:   # handle old data format
-                qnstr = re.sub("[\['\]]", "", d[nqn_col])
-                qnstr = sum([int(x) for x in qnstr.split(", ")])
-                user_stats[email][3] += qnstr
+            user_stats[email][2] += parse_number(d[nqn_col])
+            # try:    # integer
+            #     user_stats[email][2] += d[nqn_col]
+            # except Exception:   # handle old data format
+            #     qnstr = re.sub("[\['\]]", "", d[nqn_col])
+            #     qnstr = sum([int(x) for x in qnstr.split(", ")])
+            #     user_stats[email][3] += qnstr
         
         # get username
         all_users = conn.execute(text("SELECT * FROM users;"))
@@ -104,7 +105,13 @@ def get_daily_usage():
         # print(message)
         # send message
         bot.sendMessage(chat_id=config.TELE_CHAT_ID, text=message)
-    
+
+def parse_number(num):
+    if type(num)==str:
+        num = re.sub("[\['\]]", "", num)
+        num = sum([int(x) for x in num.split(", ")])
+    return num
+
 if __name__ == "__main__":
     get_daily_usage()
     # start job at 8pm everyday
