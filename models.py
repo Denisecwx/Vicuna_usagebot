@@ -49,7 +49,7 @@ def send_message(msglist, section_header="", jointype="\n"):
         charcount={1:0}
         current_page = 1
         for i, section in enumerate(msglist):
-            if charcount[current_page] + len(jointype) + sectionlen[i] < MAX_CHAR_COUNT - len(f"PAGE [{current_page}/]")-5:
+            if charcount[current_page] + len(jointype) + sectionlen[i] < MAX_CHAR_COUNT - 50:
                 pages[current_page] += jointype + section
                 charcount[current_page] += sectionlen[i]
             else:
@@ -108,9 +108,9 @@ def get_daily_usage():
 
         # create message
         active_template = "{1}    ({0}):\n    today : {2}\n    this month : {3}\n    past 3 months : {4}"
-        active_header = "Active Accounts\n-----------"
+        active_header = "Active Accounts"
         inactive_template = "{1}    ({0}):\n    this month : {3}\n    past 3 months : {4}"
-        inactive_header = "Inactive Accounts\n-------------"
+        inactive_header = "Inactive Accounts"
         
         active_count=0
         active_list = []
