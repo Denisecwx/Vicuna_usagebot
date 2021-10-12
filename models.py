@@ -57,14 +57,15 @@ def send_message(msglist, section_header="", jointype="\n"):
                 pages[current_page] = section
                 charcount[current_page] = sectionlen[i]
         for page in pages:
-            section_header += f" [PAGE {page}/{len(pages)}]\n"
-            msg = jointype.join([section_header]+pages[page])
+            msg = f"{section_header} [PAGE {page}/{len(pages)}]\n----------------\n{pages[page]}"
             bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=msg)
 
     else:
         if section_header:
             msglist = [section_header] + msglist
+        msg =jointype.join(msglist)
         bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=jointype.join(msglist))
+    
 
 def get_daily_usage():
     '''
