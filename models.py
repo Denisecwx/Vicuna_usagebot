@@ -49,7 +49,7 @@ def send_message(msglist, section_header="", jointype="\n"):
         charcount={1:0}
         current_page = 1
         for i, section in enumerate(msglist):
-            if charcount[current_page] + jointype + sectionlen[i] < MAX_CHAR_COUNT:
+            if charcount[current_page] + len(jointype) + sectionlen[i] - 25 <= MAX_CHAR_COUNT:
                 pages[current_page] += jointype + section
                 charcount[current_page] += sectionlen[i]
             else:
