@@ -25,6 +25,23 @@ GET_ACTIVE_USERS_SQL = f"SELECT count(distinct(histories.user_email)) FROM histo
 
 TOTAL_USERS_SQL = f"SELECT COUNT(*) FROM USERS;"
 
+def parse_number(num):
+    if type(num)==str:
+        num = num.strip('][').split(', ')
+        num = sum([int(x.strip("'")) for x in num])
+    return num
+
+def send_message(message):
+    if len(message) > 4096:
+        message_list = [message[i:i+4096] for i in range(0, len(message), 4096)]
+        for msg in message_list:
+            bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=msg)
+    else:
+        bot.sendMessage(chat_ud = config.TELE_CHAT_ID, text=message)
+
+
+
+
 def get_daily_usage():
     '''
     Notify usage stats on daily basis
@@ -40,12 +57,19 @@ def get_daily_usage():
     '''
     engine = create_engine(config.SQLALCHEMY_DATABASE_URI, echo=False, future=True)
     with engine.connect() as conn:
-        user_stats = {}
-
         all_users = conn.execute(text(SQL_STATEMENT))
+        '''
+        Stats tracked:
+        - user name
+        - downloads today
+        - downloads for month
+        - downloads for 3 months
+        - active account]
+        '''
+        user_stats = {email: [name, 0,0,0,False] for email, nqn, created_at, name in all_users}
+
         total_users = conn.execute(text("SELECT COUNT(*) FROM users;")).first()[0]
         for email, nqn, created_at, name in all_users:
-            user_stats[email] = [name, 0,0,0, False] # [user name, downloads today, downloads for month, downloads for 3 months, active account]
             dld_count = parse_number(nqn)
             user_stats[email][3] += dld_count
             
@@ -82,17 +106,11 @@ def get_daily_usage():
             inactive_str = "--N/A--"
 
         # send message 
-        bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=summary_msg)
-        bot.sendMessage(chat_id=config.TELE_CHAT_ID, text=active_str)
-        bot.sendMessage(chat_id=config.TELE_CHAT_ID, text=inactive_str)
+        send_message(summary_msg)
+        send_message(active_str)
+       send_message(inactive_str)
                 
         # print(message)
-
-def parse_number(num):
-    if type(num)==str:
-        num = num.strip('][').split(', ')
-        num = sum([int(x.strip("'")) for x in num])
-    return num
 
 if __name__ == "__main__":
     get_daily_usage()
