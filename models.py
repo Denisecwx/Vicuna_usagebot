@@ -58,15 +58,15 @@ def send_message(msglist, section_header="", jointype="\n"):
                 charcount[current_page] = sectionlen[i]
         for page in pages:
             msg = f"{section_header} [PAGE {page}/{len(pages)}]\n----------------\n{pages[page]}"
-            # print(f'message : {msg}')
+            # print(f'message : \n{msg}')
             bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=msg)
 
     else:
         msg =jointype.join(msglist)
         if section_header:
             msg = f'{section_header}\n----------------\n{msg}'
-        # print(f'message : {msg}')
-        bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=jointype.join(msglist))
+        # print(f'message : \n{msg}')
+        bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=msg)
     
 
 def get_daily_usage():
@@ -142,9 +142,9 @@ def get_daily_usage():
 if __name__ == "__main__":
     get_daily_usage()
     # start job at 8pm everyday
-    # scheduler.add_job(get_daily_usage, 'interval', hours=24, start_date=datetime.today().replace(hour=20, minute=0, second=0, microsecond=0))
+    scheduler.add_job(get_daily_usage, 'interval', hours=24, start_date=datetime.today().replace(hour=20, minute=0, second=0, microsecond=0))
 
-    # try:
-    #     scheduler.start()
-    # except (KeyboardInterrupt, SystemExit):
-    #     pass
+    try:
+        scheduler.start()
+    except (KeyboardInterrupt, SystemExit):
+        pass
