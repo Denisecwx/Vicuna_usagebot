@@ -31,16 +31,40 @@ def parse_number(num):
         num = sum([int(x.strip("'")) for x in num])
     return num
 
-def send_message(message):
-    if len(message) > 4096:
-        message_list = [message[i:i+4096] for i in range(0, len(message), 4096)]
-        for msg in message_list:
+def send_message(msglist, section_header="", jointype="\n"):
+    '''
+    Split messages into chunks smaller than 4096 characters.
+
+    Parameters
+    ----------
+    msglist : list
+        list of messages in sections.
+    '''
+    MAX_CHAR_COUNT=4096
+    sectionlen = [len(section) for section in msglist]
+    if sum(sectionlen) > 4096:
+        print('message is too long')
+        # split them into chunks
+        pages={1:""}
+        charcount={1:0}
+        current_page = 1
+        for i, section in enumerate(msglist):
+            if charcount[current_page] + jointype + sectionlen[i] < MAX_CHAR_COUNT:
+                pages[current_page] += jointype + section
+                charcount[current_page] += sectionlen[i]
+            else:
+                current_page += 1
+                pages[current_page] = section
+                charcount[current_page] = sectionlen[i]
+        for page in pages:
+            section_header += f" [PAGE {page}/{len(pages)}]\n"
+            msg = jointype.join([section_header]+pages[page])
             bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=msg)
+
     else:
-        bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=message)
-
-
-
+        if section_header:
+            msglist = [section_header] + msglist
+        bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=jointype.join(msglist))
 
 def get_daily_usage():
     '''
@@ -83,7 +107,9 @@ def get_daily_usage():
 
         # create message
         active_template = "{1}    ({0}):\n    today : {2}\n    this month : {3}\n    past 3 months : {4}"
+        active_header = "Active Accounts\n-----------"
         inactive_template = "{1}    ({0}):\n    this month : {3}\n    past 3 months : {4}"
+        inactive_header = "Inactive Accounts\n-------------"
         
         active_count=0
         active_list = []
@@ -97,18 +123,16 @@ def get_daily_usage():
 
         summary_msg = f"Summary (Downloads within the last 5 DAYS):\n---------------\nActive Accounts: {active_count}/{total_users}\nInactive Accounts:{total_users-active_count}/{total_users}"
         
-        active_str = "\n".join(active_list)
-        inactive_str = "\n".join(inactive_list)
-
-        if not active_str:
-            active_str = "--N/A--"
-        if not inactive_str:
-            inactive_str = "--N/A--"
+        if not active_list:
+            active_list = ["--N/A--"]
+        if not inactive_list:
+            inactive_list = ["--N/A--"]
 
         # send message 
-        send_message(summary_msg)
-        send_message(active_str)
-        send_message(inactive_str)
+        bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=summary_msg)
+        # send_message(summary_msg)
+        send_message(active_list, section_header=active_header)
+        send_message(inactive_list, section_header=inactive_header)
                 
         # print(message)
 
