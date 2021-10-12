@@ -37,7 +37,7 @@ def send_message(message):
         for msg in message_list:
             bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=msg)
     else:
-        bot.sendMessage(chat_ud = config.TELE_CHAT_ID, text=message)
+        bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=message)
 
 
 
