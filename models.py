@@ -40,16 +40,16 @@ def send_message(msglist, section_header="", jointype="\n"):
     msglist : list
         list of messages in sections.
     '''
-    MAX_CHAR_COUNT=4096
+    MAX_CHAR_COUNT= 4096 - len(section_header)*2 - len(jointype)*2
     sectionlen = [len(section) for section in msglist]
-    if sum(sectionlen) > 4096:
+    if sum(sectionlen) > MAX_CHAR_COUNT:
         print('message is too long')
         # split them into chunks
         pages={1:""}
         charcount={1:0}
         current_page = 1
         for i, section in enumerate(msglist):
-            if charcount[current_page] + len(jointype) + sectionlen[i] - 25 <= MAX_CHAR_COUNT:
+            if charcount[current_page] + len(jointype) + sectionlen[i] < MAX_CHAR_COUNT - len(f"PAGE [{current_page}/]")-5:
                 pages[current_page] += jointype + section
                 charcount[current_page] += sectionlen[i]
             else:
@@ -61,9 +61,9 @@ def send_message(msglist, section_header="", jointype="\n"):
             bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=msg)
 
     else:
-        if section_header:
-            msglist = [section_header] + msglist
         msg =jointype.join(msglist)
+        if section_header:
+            msg = f'{section_header}\n----------------\n{msg}'
         bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=jointype.join(msglist))
     
 
