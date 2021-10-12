@@ -24,7 +24,8 @@ SQL_STATEMENT = f"SELECT histories.user_email, histories.no_of_question, histori
 GET_ACTIVE_USERS_SQL = f"SELECT count(distinct(histories.user_email)) FROM histories WHERE created_at >= DATE_ADD( CURDATE(), INTERVAL -{DEFINE_ACTIVE} DAY) AND user_email NOT IN ('Test2@test.com', 'tengxinhui73@gmail.com', 'testtest@mail.com', 'saraikmalia.vicuna@gmail.com');"
 
 TOTAL_USERS_SQL = f"SELECT COUNT(*) FROM USERS;"
-COMMUNICATIONS = ["-Fix stats that were miscalculated and made the process more efficient."]
+COMMUNICATIONS = ["-Fix stats that were miscalculated and made the process more efficient.",
+                "-Send Summary last as list of users are getting too long."]
 
 def parse_number(num):
     if type(num)==str:
