@@ -25,7 +25,8 @@ GET_ACTIVE_USERS_SQL = f"SELECT count(distinct(histories.user_email)) FROM histo
 
 TOTAL_USERS_SQL = f"SELECT COUNT(*) FROM USERS;"
 COMMUNICATIONS = ["-Fix stats that were miscalculated and made the process more efficient.",
-                "-Send Summary last as list of users are getting too long."]
+                "-Send Summary last as list of users are getting too long.",
+                "-Add hashtags to so that key messages and summaries can be found easily."]
 
 def parse_number(num):
     if type(num)==str:
@@ -127,7 +128,7 @@ def get_daily_usage():
             else:
                 inactive_list.append(inactive_template.format(email, *user_stats[email]))
 
-        summary_msg = f"Summary (Downloads within the last 5 DAYS):\n---------------\nActive Accounts: {active_count}/{total_users}\nInactive Accounts:{total_users-active_count}/{total_users}"
+        summary_msg = f"#Summary (Downloads within the last 5 DAYS):\n---------------\nActive Accounts: {active_count}/{total_users}\nInactive Accounts:{total_users-active_count}/{total_users}"
         
         if not active_list:
             active_list = ["--N/A--"]
@@ -144,7 +145,7 @@ def get_daily_usage():
 if __name__ == "__main__":
     get_daily_usage()
     if COMMUNICATIONS:
-        send_message(COMMUNICATIONS, section_header="Updates")
+        send_message(COMMUNICATIONS, section_header="#Updates")
     # start job at 8pm everyday
     scheduler.add_job(get_daily_usage, 'interval', hours=24, start_date=datetime.today().replace(hour=20, minute=0, second=0, microsecond=0))
 
