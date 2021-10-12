@@ -43,7 +43,7 @@ def send_message(msglist, section_header="", jointype="\n"):
     MAX_CHAR_COUNT= 4096 - len(section_header)*2 - len(jointype)*2
     sectionlen = [len(section) for section in msglist]
     if sum(sectionlen) > MAX_CHAR_COUNT:
-        print('message is too long')
+        # print('message is too long')
         # split them into chunks
         pages={1:""}
         charcount={1:0}
@@ -58,12 +58,14 @@ def send_message(msglist, section_header="", jointype="\n"):
                 charcount[current_page] = sectionlen[i]
         for page in pages:
             msg = f"{section_header} [PAGE {page}/{len(pages)}]\n----------------\n{pages[page]}"
+            # print(f'message : {msg}')
             bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=msg)
 
     else:
         msg =jointype.join(msglist)
         if section_header:
             msg = f'{section_header}\n----------------\n{msg}'
+        # print(f'message : {msg}')
         bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=jointype.join(msglist))
     
 
@@ -91,17 +93,18 @@ def get_daily_usage():
         - downloads for 3 months
         - active account]
         '''
-        user_stats = {email: [name, 0,0,0,False] for email, nqn, created_at, name in all_users}
-
+        user_stats={}
         total_users = conn.execute(text("SELECT COUNT(*) FROM users;")).first()[0]
         for email, nqn, created_at, name in all_users:
+            if email not in user_stats:
+                user_stats[email] = [name, 0,0,0,False]
             dld_count = parse_number(nqn)
             user_stats[email][3] += dld_count
-            
-            if created_at > datetime.today()-timedelta(days=DEFINE_ACTIVE):
+            if created_at > datetime.today()-timedelta(days=DEFINE_ACTIVE) and not user_stats[email][4]:
                 user_stats[email][4] = True
-                
-            if created_at.date == datetime.today().date:
+            
+            # print(f'created date : {created_at.date()}    today : {datetime.today().date()}')
+            if created_at.date() == datetime.today().date():
                 user_stats[email][1] += dld_count
             if created_at.month == created_at.strptime(str(created_at), "%Y-%m-%d %H:%M:%S").month:
                 user_stats[email][2] += dld_count
@@ -130,19 +133,18 @@ def get_daily_usage():
             inactive_list = ["--N/A--"]
 
         # send message 
-        bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=summary_msg)
-        # send_message(summary_msg)
         send_message(active_list, section_header=active_header)
         send_message(inactive_list, section_header=inactive_header)
+        bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=summary_msg)
                 
         # print(message)
 
 if __name__ == "__main__":
     get_daily_usage()
     # start job at 8pm everyday
-    scheduler.add_job(get_daily_usage, 'interval', hours=24, start_date=datetime.today().replace(hour=20, minute=0, second=0, microsecond=0))
+    # scheduler.add_job(get_daily_usage, 'interval', hours=24, start_date=datetime.today().replace(hour=20, minute=0, second=0, microsecond=0))
 
-    try:
-        scheduler.start()
-    except (KeyboardInterrupt, SystemExit):
-        pass
+    # try:
+    #     scheduler.start()
+    # except (KeyboardInterrupt, SystemExit):
+    #     pass
