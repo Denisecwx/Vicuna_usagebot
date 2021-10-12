@@ -16,6 +16,11 @@ acc_to_omit = ["Test2@test.com",
             "testtest@mail.com",
             "saraikmalia.vicuna@gmail.com"]
 
+MONTH_RANGE = 3   # number of months to track
+DEFINE_ACTIVE = 5   # define active accounts as downloads within past 5 days
+
+SQL_STATEMENT = f"SELECT histories.user_email, histories.no_of_question, histories.created_at, users.name FROM histories LEFT JOIN users on users.email = histories.user_email WHERE MONTH(histories.created_at) >= MONTH(CURRENT_DATE()) - {MONTH_RANGE} AND YEAR(histories.created_at) = YEAR(CURRENT_DATE()) AND histories.user_email NOT IN ('Test2@test.com', 'tengxinhui73@gmail.com', 'testtest@mail.com', 'saraikmalia.vicuna@gmail.com');"
+
 def get_daily_usage():
     '''
     Notify usage stats on daily basis
@@ -31,85 +36,58 @@ def get_daily_usage():
     '''
     engine = create_engine(config.SQLALCHEMY_DATABASE_URI, echo=False, future=True)
     with engine.connect() as conn:
-        '''
-        Check downloads
-        '''
-        total_users = conn.execute(text("SELECT COUNT(*) FROM users;"))
-        total_users = total_users.first()[0] - len(acc_to_omit)
         user_stats = {}
 
-        # different time ranges
-        month_range=3   # number of months to track
-        define_active = 5   # define active accounts as downloads within past 5 days
-        this_month = datetime.strptime(str(date.today()), "%Y-%m-%d")
-        this_month = this_month.month
-        today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
-        last_five = today - timedelta(days=define_active)
-        
-        active_count = 0 # active within past 5 days
-        downld_data = conn.execute(
-            text(f"SELECT * FROM histories WHERE MONTH(created_at) >= MONTH(CURRENT_DATE()) - {month_range} AND YEAR(created_at) = YEAR(CURRENT_DATE());")
-        )
-
-        # column indexes for histories
-        email_col, date_col, nqn_col = 1, 8, 7
-        for d in downld_data.all():
-            email = d[1]
-            if email not in acc_to_omit: # check if account belongs to staff
-                if email not in user_stats:
-                    user_stats[email] = ["--N/A--", 0,0,0, None] # [user name, downloads today, downloads for month, downloads for 3 months, active account]
+        all_users = conn.execute(text(SQL_STATEMENT))
+        total_users = conn.execute(text("SELECT COUNT(*) FROM users;")).first()[0]
+        for email, nqn, created_at, name in all_users:
+            user_stats[email] = [name, 0,0,0, False] # [user name, downloads today, downloads for month, downloads for 3 months, active account]
+            dld_count = parse_number(nqn)
+            user_stats[email][3] += dld_count
+            
+            if created_at > datetime.today()-timedelta(days=DEFINE_ACTIVE):
+                user_stats[4] = True
                 
-                data_date = d[date_col]
-                data_month = d[date_col].strptime(str(d[date_col]), "%Y-%m-%d %H:%M:%S").month
-
-                if data_date == today: # number of q downloaded today
-                    user_stats[email][1] += parse_number(d[nqn_col])
-                if data_month == this_month: # number of q downloaded this month
-                    user_stats[email][2] += parse_number(d[nqn_col])
-
-                if data_date>=last_five and user_stats[email][4]==None:
-                    user_stats[email][4] = True
-                    active_count+=1
-                elif data_date < last_five and user_stats[email][4]==None:
-                    user_stats[email][4] = False
-                # number of q downloaded past 3 months
-                user_stats[email][2] += parse_number(d[nqn_col])
-        
-        # get username
-        all_users = conn.execute(text("SELECT * FROM users;"))
-        for users in all_users.all():
-            email = users[3]
-            if email in user_stats:
-                user_stats[email][0] = users[2]
+            if created_at.date == datetime.today().date:
+                user_stats[email][1] += dld_count
+            if created_at.month == created_at.strptime(str(created_at), "%Y-%m-%d %H:%M:%S").month:
+                user_stats[email][2] += dld_count
 
         # create message
-        summary = f"Summary (Downloads within the last 5 DAYS):\n---------------\nActive Accounts: {active_count}/{total_users}\nInactive Accounts:{total_users-active_count}/{total_users}"
         active_template = "{1}    ({0}):\n    today : {2}\n    this month : {3}\n    past 3 months : {4}"
         inactive_template = "{1}    ({0}):\n    this month : {3}\n    past 3 months : {4}"
+        
+        active_count=0
         active_list = []
         inactive_list = []
         for email in user_stats:
             if user_stats[email][4]:
                 active_list.append(active_template.format(email, *user_stats[email]))
+                active_count += 1
             else:
                 inactive_list.append(inactive_template.format(email, *user_stats[email]))
+
+        summary_msg = f"Summary (Downloads within the last 5 DAYS):\n---------------\nActive Accounts: {active_count}/{total_users}\nInactive Accounts:{total_users-active_count}/{total_users}"
         
         active_str = "\n".join(active_list)
         inactive_str = "\n".join(inactive_list)
+
         if not active_str:
             active_str = "--N/A--"
         if not inactive_str:
             inactive_str = "--N/A--"
-        message = f'{summary}\n\nActive Accounts (Questions downloaded)\n-------------\n{active_str}\n\nInactive Accounts (Questions downloaded)\n-------------\n{inactive_str}'
-        
+
+        # send message 
+        bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=summary_msg)
+        bot.sendMessage(chat_id=config.TELE_CHAT_ID, text=active_str)
+        bot.sendMessage(chat_id=config.TELE_CHAT_ID, text=inactive_str)
+                
         # print(message)
-        # send message
-        bot.sendMessage(chat_id=config.TELE_CHAT_ID, text=message)
 
 def parse_number(num):
     if type(num)==str:
-        num = re.sub("[\['\]]", "", num)
-        num = sum([int(x) for x in num.split(", ")])
+        num = num.strip('][').split(', ')
+        num = sum([int(x.strip("'")) for x in num])
     return num
 
 if __name__ == "__main__":
