@@ -21,6 +21,10 @@ DEFINE_ACTIVE = 5   # define active accounts as downloads within past 5 days
 
 SQL_STATEMENT = f"SELECT histories.user_email, histories.no_of_question, histories.created_at, users.name FROM histories LEFT JOIN users on users.email = histories.user_email WHERE MONTH(histories.created_at) >= MONTH(CURRENT_DATE()) - {MONTH_RANGE} AND YEAR(histories.created_at) = YEAR(CURRENT_DATE()) AND histories.user_email NOT IN ('Test2@test.com', 'tengxinhui73@gmail.com', 'testtest@mail.com', 'saraikmalia.vicuna@gmail.com');"
 
+GET_ACTIVE_USERS_SQL = f"SELECT count(distinct(histories.user_email)) FROM histories WHERE created_at >= DATE_ADD( CURDATE(), INTERVAL -{DEFINE_ACTIVE} DAY) AND user_email NOT IN ('Test2@test.com', 'tengxinhui73@gmail.com', 'testtest@mail.com', 'saraikmalia.vicuna@gmail.com');"
+
+TOTAL_USERS_SQL = f"SELECT COUNT(*) FROM USERS;"
+
 def get_daily_usage():
     '''
     Notify usage stats on daily basis
@@ -46,7 +50,7 @@ def get_daily_usage():
             user_stats[email][3] += dld_count
             
             if created_at > datetime.today()-timedelta(days=DEFINE_ACTIVE):
-                user_stats[4] = True
+                user_stats[email][4] = True
                 
             if created_at.date == datetime.today().date:
                 user_stats[email][1] += dld_count
