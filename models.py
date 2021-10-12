@@ -24,7 +24,7 @@ SQL_STATEMENT = f"SELECT histories.user_email, histories.no_of_question, histori
 GET_ACTIVE_USERS_SQL = f"SELECT count(distinct(histories.user_email)) FROM histories WHERE created_at >= DATE_ADD( CURDATE(), INTERVAL -{DEFINE_ACTIVE} DAY) AND user_email NOT IN ('Test2@test.com', 'tengxinhui73@gmail.com', 'testtest@mail.com', 'saraikmalia.vicuna@gmail.com');"
 
 TOTAL_USERS_SQL = f"SELECT COUNT(*) FROM USERS;"
-COMMUNICATIONS = "Update\n-----\nFix stats that were miscalculated and made the process more efficient."
+COMMUNICATIONS = ["-Fix stats that were miscalculated and made the process more efficient."]
 
 def parse_number(num):
     if type(num)==str:
@@ -143,7 +143,7 @@ def get_daily_usage():
 if __name__ == "__main__":
     get_daily_usage()
     if COMMUNICATIONS:
-        bot.sendMessage(chat_id = config.TELE_CHAT_ID, text=COMMUNICATIONS)
+        send_message(COMMUNICATIONS, section_header="Updates")
     # start job at 8pm everyday
     scheduler.add_job(get_daily_usage, 'interval', hours=24, start_date=datetime.today().replace(hour=20, minute=0, second=0, microsecond=0))
 
