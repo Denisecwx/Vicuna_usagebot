@@ -108,7 +108,7 @@ def get_daily_usage():
         # send message 
         send_message(summary_msg)
         send_message(active_str)
-       send_message(inactive_str)
+        send_message(inactive_str)
                 
         # print(message)
 
